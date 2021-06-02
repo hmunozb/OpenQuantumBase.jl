@@ -20,6 +20,21 @@ struct DenseHamiltonian{T<:Number} <: AbstractDenseHamiltonian{T}
     EIGS::Any
 end
 
+"""
+$(TYPEDEF)
+
+Defines a constant Hamiltonian object with dense Matrices.
+
+# Fields
+
+$(FIELDS)
+"""
+struct ConstantDenseHamiltonian{T<:Number} <: AbstractDenseHamiltonian{T}
+    "The Hamiltonian matrix"
+    m::Vector
+    "Eigen decomposition routine"
+    EIGS::Any
+end
 
 """
 $(SIGNATURES)
