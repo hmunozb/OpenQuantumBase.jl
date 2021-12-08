@@ -24,11 +24,11 @@ end
 """
 $(SIGNATURES)
 
-Constructor of the `DenseHamiltonian` type. `funcs` and `mats` are lists of time-dependent functions and the corresponding matrices. The Hamiltonian can be represented as ``∑ᵢfuncs[i](s)×mats[i]``. `unit` specifies wether `:h` or `:ħ` is set to one when defining `funcs` and `mats`. The `mats` will be scaled by ``2π`` if unit is `:h`.
+Constructor of the `DenseHamiltonian` type. The Hamiltonian is represented as ``∑ᵢfuncs[i](s)×mats[i]``, where `funcs` and `mats` are lists of time-dependent functions and the corresponding matrices. `unit` specifies wether `:h` or `:ħ` is set to one when defining `funcs` and `mats`. The `mats` will be scaled by ``2π`` if unit is `:h`. `static` specifies whether to convert the matrices in `mats` into static arrays when their sizes are smaller than 10×10.
 
-`EIGS` is the initializer for the eigendecomposition routine for the Hamiltonian. It should return a function of the signature: `(H, s, lvl) -> (w, v)`. The default method `EIGEN_DEFAULT` will use `LAPACK` routine.
+`EIGS` is the initializer for the eigendecomposition routine for the Hamiltonian. It takes the preassigned cache object for the Hamiltonian as input and returns a function of the following signature: `(H, s, lvl) -> (w, v)`, where `lvl` denotes the truncation level for the eigen factorization. The default method `EIGEN_DEFAULT` will return a wrapper around the `LAPACK` routine.
 """
-function DenseHamiltonian(funcs, mats; unit = :h, EIGS = EIGEN_DEFAULT)
+function DenseHamiltonian(funcs, mats; unit = :h, static = true, EIGS = EIGEN_DEFAULT)
     if any((x) -> size(x) != size(mats[1]), mats)
         throw(ArgumentError("Matrices in the list do not have the same size."))
     end
@@ -37,7 +37,7 @@ function DenseHamiltonian(funcs, mats; unit = :h, EIGS = EIGEN_DEFAULT)
     end
     hsize = size(mats[1])
     # use static array for size smaller than 100
-    if hsize[1] <= 10
+    if hsize[1] <= 10 && static == true
         mats = [SMatrix{hsize[1],hsize[2]}(unit_scale(unit) * m) for m in mats]
     else
         mats = unit_scale(unit) * mats
@@ -102,4 +102,10 @@ end
 function Base.copy(H::DenseHamiltonian)
     mats = Base.copy(H.m)
     DenseHamiltonian{eltype(mats[1])}(H.f, mats, Base.copy(H.u_cache), size(H), H.EIGS)
+end
+
+function rotate!(H::DenseHamiltonian, v)
+    for i in 1:length(H.m)
+        H.m[i] = v' * H.m[i] * v
+    end
 end
