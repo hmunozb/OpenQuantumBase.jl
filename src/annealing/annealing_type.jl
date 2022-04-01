@@ -5,7 +5,7 @@ $(TYPEDEF)
 # Fields
 $(FIELDS)
 """
-mutable struct Annealing{hType,uType} <: AbstractAnnealing{hType,uType}
+mutable struct Annealing{hType, uType, I <: Union{InteractionSet, Nothing} } <: AbstractAnnealing{hType, uType}
     "Hamiltonian for the annealing."
     H::hType
     "Initial state for the annealing."
@@ -13,7 +13,7 @@ mutable struct Annealing{hType,uType} <: AbstractAnnealing{hType,uType}
     "Function of annealing parameter s wrt to t"
     annealing_parameter::Any
     "A system bath interaction set."
-    interactions::Union{InteractionSet,Nothing}
+    interactions::I
 end
 
 Evolution = Annealing
