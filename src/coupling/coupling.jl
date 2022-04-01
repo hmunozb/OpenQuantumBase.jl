@@ -7,9 +7,9 @@ Defines constant system bath coupling operators.
 
 $(FIELDS)
 """
-struct ConstantCouplings <: AbstractCouplings
+struct ConstantCouplings{ M <: AbstractMatrix, MA <: AbstractArray{M, 1}} <: AbstractCouplings
     "1-D array for independent coupling operators"
-    mats::Vector{AbstractMatrix}
+    mats::MA
     "String representation for the coupling (for display purpose)"
     str_rep::Union{Vector{String},Nothing}
 end
@@ -42,6 +42,20 @@ function ConstantCouplings(
     else
         mats = unit_scale(unit) .* mats
     end
+    ConstantCouplings(mats, nothing)
+end
+
+"""
+    function ConstantCouplings(mats::Union{Vector{Matrix{T}},Vector{SparseMatrixCSC{T,Int}}}; unit=:h) where {T<:Number}
+
+Construct from a static array of 
+Constructor of `ConstantCouplings` object. `mats` is 1-D array of matrices. `str_rep` is the optional string representation of the coupling terms. `unit` is the unit one -- `:h` or `:ħ`. The `mats` will be scaled by ``2π`` is unit is `:h`.
+"""
+function ConstantCouplings(
+    mats::SVector{N, SMatrix{N1, N2, T, L}};
+    unit = :h,
+) where {T<:Number, N, N1, N2, L }
+    mats = sacollect(SVector{N, SMatrix{N1, N2, T, L}}, unit_scale(unit) * m for m in mats)
     ConstantCouplings(mats, nothing)
 end
 
