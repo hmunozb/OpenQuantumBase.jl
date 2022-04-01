@@ -7,9 +7,9 @@ Defines a total Liouvillian to feed to the solver using the `DiffEqOperator` int
 
 $(FIELDS)
 """
-struct DiffEqLiouvillian{diagonalization,adiabatic_frame}
+struct DiffEqLiouvillian{diagonalization,adiabatic_frame, Htype <: AbstractHamiltonian}
     "Hamiltonian"
-    H::AbstractHamiltonian
+    H::Htype
     "Open system in eigenbasis"
     opensys_eig::Vector{AbstractLiouvillian}
     "Open system in normal basis"
@@ -38,7 +38,7 @@ function DiffEqLiouvillian(H, opensys_eig, opensys, lvl)
     end
     diagonalization = isempty(opensys_eig) ? false : true
     adiabatic_frame = typeof(H) <: AdiabaticFrameHamiltonian
-    DiffEqLiouvillian{diagonalization,adiabatic_frame}(H, opensys_eig, opensys, lvl, u_cache)
+    DiffEqLiouvillian{diagonalization,adiabatic_frame,typeof(H)}(H, opensys_eig, opensys, lvl, u_cache)
 end
 
 function (Op::DiffEqLiouvillian{false,false})(du, u, p, t)
@@ -56,7 +56,7 @@ function update_cache!(cache, Op::DiffEqLiouvillian{false,false}, p, t)
     end
 end
 
-function update_vectorized_cache!(cache, Op::DiffEqLiouvillian{false,false}, p, t)
+function update_vectorized_cache!(cache, Op::DiffEqLiouvillian{ false,false}, p, t)
     update_vectorized_cache!(cache, Op.H, p, p(t))
     for lv in Op.opensys
         update_vectorized_cache!(cache, lv, p, t)
@@ -65,7 +65,8 @@ end
 
 function (Op::DiffEqLiouvillian{true,false})(du, u, p, t)
     s = p(t)
-    w, v = Op.H.EIGS(Op.H, s, Op.lvl)
+    #w, v = Op.H.EIGS(Op.H, s, Op.lvl)
+    w, v = haml_eigs(Op.H, s, lvl=Op.lvl)
     ω_ba = transpose(w) .- w
     ρ = v' * u * v
     H = Diagonal(w)
