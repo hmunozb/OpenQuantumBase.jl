@@ -10,10 +10,10 @@ Ohmic bath object to hold a particular parameter set.
 - `ωc` -- cutoff frequence.
 - `β` -- inverse temperature.
 """
-struct OhmicBath <: AbstractBath
-    η::Float64
-    ωc::Float64
-    β::Float64
+struct OhmicBath{F<: Float64} <: AbstractBath
+    η::F
+    ωc::F
+    β::F
 end
 
 """
